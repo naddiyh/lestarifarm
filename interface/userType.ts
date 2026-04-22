@@ -1,7 +1,7 @@
 export type TRole = "super-admin" | "admin";
 
 export interface User {
-  id: string;
+  uid: string;
   name: string;
   email: string;
   img: string | null;
