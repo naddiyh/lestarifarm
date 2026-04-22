@@ -8,7 +8,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="font-sans min-h-screen">
+      <body className="font-sans w-full min-h-screen">
         <SidebarProvider>
           <AppSidebar />
           <div className=" w-full">

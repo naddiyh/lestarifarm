@@ -133,7 +133,9 @@
     @apply border-border outline-ring/50;
   }
   body {
+    min-height: 100dvh;
     margin: 0;
+    overflow: hidden;
     font-family: var(--font-sans);
     @apply bg-background text-foreground;
   }
