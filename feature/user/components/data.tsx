@@ -4,23 +4,12 @@ export const data: User[] = [
   {
     uid: "dddddd",
     email: "putri@gmail.com",
-    password: "",
+
     phone: 62823983888,
-    createdAt: "8-10-222",
-    updatedAt: "9-03-333",
+    created_at: "8-10-222",
+    updated_at: "9-03-333",
     img: "https://github.com/shadcn.png",
     name: "Putri Salsabila",
     role: "super-admin",
-  },
-  {
-    uid: "dddddd",
-    email: "putri@gmail.com",
-    password: "",
-    phone: 62823983888,
-    createdAt: "8-10-222",
-    updatedAt: "9-03-333",
-    img: "https://github.com/shadcn.png",
-    name: "Putri Salsabila",
-    role: "admin",
   },
 ];
