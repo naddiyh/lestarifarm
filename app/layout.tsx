@@ -29,7 +29,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${poppins.variable} h-full antialiased`}
     >
-      <body className="min-h-screen w-full  flex flex-col">
+      <body className="min-h-screen w-full flex flex-col overflow-x-hidden">
         <TooltipProvider>{children}</TooltipProvider>
         <ToastContainer />
       </body>
