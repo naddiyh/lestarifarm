@@ -59,7 +59,7 @@ export const Login = () => {
             </div>
             Lestari Farm
           </CardTitle>
-          <CardDescription className="mt-2 text-center text-white">
+          <CardDescription className="mt-3 text-center text-white">
             Login to your account
           </CardDescription>
         </CardHeader>
