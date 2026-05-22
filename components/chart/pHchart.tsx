@@ -30,8 +30,10 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { usePhData } from "@/hooks/usePhData";
+import { usePhChart, RangeType } from "@/hooks/usePhAvg";
 export const description = "Average pH Analysis";
-
 const chartDataAvg = [
   { period: "Mon", ph: 6.1 },
   { period: "Tue", ph: 6.3 },
@@ -56,15 +58,21 @@ const chartConfigLine = {
   },
 };
 
-const chartDataLine = [
-  { time: "1", ph: 6.1 },
-  { time: "2", ph: 5.2 },
-  { time: "3", ph: 3.0 },
-  { time: "4", ph: 7.3 },
-  { time: "5", ph: 4.1 },
-];
-
 export function ChartPhLine() {
+  const { chartData, latestPh } = usePhData();
+
+  const getPhStatus = (ph: number | null) => {
+    if (ph === null)
+      return { label: "Loading...", color: "text-muted-foreground" };
+
+    if (ph >= 6 && ph <= 7)
+      return { label: "Normal Ph", color: "text-green-500" };
+    if (ph < 6) return { label: "Low Ph", color: "text-red-500" };
+    return { label: "High Ph", color: "text-yellow-500" };
+  };
+
+  const status = getPhStatus(latestPh);
+
   return (
     <Card>
       <CardHeader>
@@ -73,7 +81,7 @@ export function ChartPhLine() {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfigLine} className=" w-full">
-          <AreaChart data={chartDataLine} margin={{ right: 12 }}>
+          <AreaChart data={chartData} margin={{ right: 12 }}>
             <CartesianGrid stroke="#E0EED8" vertical={false} />
 
             <XAxis dataKey="time" tickLine={false} axisLine={false} />
@@ -99,20 +107,28 @@ export function ChartPhLine() {
           </AreaChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium">
-          Stable pH trend <TrendingUp className="h-4 w-4 text-blue-500" />
+      <CardFooter className="h-full">
+        <div className="flex items-start gap-2 text-sm">
+          <div className="grid gap-2">
+            <div
+              className={`flex items-center gap-2 font-medium ${status.color}`}
+            >
+              {status.label}
+              <TrendingUp className="h-4 w-4" />
+            </div>
+            <div className="text-muted-foreground">
+              Rentang ideal: 6.0 – 7.0
+            </div>
+          </div>
         </div>
-
-        <div className="text-muted-foreground">Optimal range: 5.5 – 6.5</div>
       </CardFooter>
     </Card>
   );
 }
 
-// Average
 export function ChartPHBar() {
-  const [range, setRange] = useState<"daily" | "weekly" | "monthly">("weekly");
+  const { range, setRange, chartData, avgPh, loading, error, phStatus } =
+    usePhChart(1);
 
   return (
     <Card>
@@ -124,10 +140,9 @@ export function ChartPHBar() {
         <div className="flex justify-end w-full pt-2">
           <Tabs
             value={range}
-            onValueChange={(val) => setRange(val as any)}
-            className=""
+            onValueChange={(val) => setRange(val as RangeType)}
           >
-            <TabsList className="grid grid-cols-3 w-[250px] ">
+            <TabsList className="grid grid-cols-3 w-62.5 ">
               <TabsTrigger value="daily">Daily</TabsTrigger>
               <TabsTrigger value="weekly">Weekly</TabsTrigger>
               <TabsTrigger value="monthly">Monthly</TabsTrigger>
@@ -138,7 +153,7 @@ export function ChartPHBar() {
 
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <BarChart data={chartDataAvg} margin={{ top: 20 }}>
+          <BarChart data={chartData} margin={{ top: 20 }}>
             <CartesianGrid vertical={false} />
 
             <XAxis dataKey="period" tickLine={false} axisLine={false} />

@@ -9,43 +9,43 @@ import {
   CardDescription,
 } from "../ui/card";
 
-function ConfidenceBars() {
-  const factors = [
-    { label: "TDS Trend", pct: 91 },
-    { label: "Water Temperature", pct: 82 },
-    { label: "Water Tank", pct: 30 },
-  ];
+// function ConfidenceBars() {
+//   const factors = [
+//     { label: "TDS Trend", pct: 91 },
+//     { label: "Water Temperature", pct: 82 },
+//     { label: "Water Tank", pct: 30 },
+//   ];
 
-  return (
-    <div className="space-y-1.5 pt-1 pb-2">
-      <p className="text-[10.5px] text-muted-foreground mb-2">
-        Key Influencing Factors
-      </p>
-      {factors.map((f) => (
-        <div key={f.label} className="flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground w-16 shrink-0">
-            {f.label}
-          </span>
-          <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full bg-green-500"
-              style={{ width: `${f.pct}%` }}
-            />
-          </div>
-          <span className="text-[10px] text-muted-foreground w-7 text-right">
-            {f.pct}%
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
+//   return (
+//     <div className="space-y-1.5 pt-1 pb-2">
+//       <p className="text-[10.5px] text-muted-foreground mb-2">
+//         Key Influencing Factors
+//       </p>
+//       {factors.map((f) => (
+//         <div key={f.label} className="flex items-center gap-2">
+//           <span className="text-[11px] text-muted-foreground w-16 shrink-0">
+//             {f.label}
+//           </span>
+//           <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+//             <div
+//               className="h-full rounded-full bg-green-500"
+//               style={{ width: `${f.pct}%` }}
+//             />
+//           </div>
+//           <span className="text-[10px] text-muted-foreground w-7 text-right">
+//             {f.pct}%
+//           </span>
+//         </div>
+//       ))}
+//     </div>
+//   );
+// }
 
 export const Forecast = () => {
   return (
     <Card className="relative overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
       {/* subtle glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       <CardHeader className="pb-1">
         <div className="flex items-center justify-between">
@@ -63,9 +63,9 @@ export const Forecast = () => {
       </CardHeader>
 
       <CardContent className="space-y-1">
-        {/* Prediction box */}
+     
         <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border">
-          <TrendingDown className="w-10 h-6 text-orange-400 flex-shrink-0" />
+          <TrendingDown className="w-10 h-6 text-orange-400 shrink-0" />
           <p className="text-sm text-muted-foreground">
             Nutrient level will drop below optimal in{" "}
             <span className="text-sm font-semibold text-orange-500">
@@ -81,13 +81,7 @@ export const Forecast = () => {
             ↓ 12% in last 3 hours
           </span>
         </div>
-
-        {/* Divider */}
-        <div className="h-px bg-border my-2" />
-
-        {/* Confidence breakdown */}
-        <ConfidenceBars />
-
+      
         {/* Divider */}
         <div className="h-px bg-border mb-2" />
 

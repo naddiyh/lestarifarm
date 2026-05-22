@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-
+import { useEffect } from "react";
 export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,14 +34,24 @@ export const Login = () => {
       toast.error(error.message);
     } else {
       toast.success("Login Success");
-      router.push("/dashboard");
-      router.refresh();
     }
   };
 
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          router.push("/dashboard");
+        }
+      },
+    );
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
   return (
     <section
-      className="min-h-screen flex items-center justify-center bg-left bg-cover
+      className="min-h-screen w-full  flex items-center justify-center bg-center bg-cover
             relative "
       style={{
         backgroundImage: "url('/bg-login.jpeg')",

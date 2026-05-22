@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -9,37 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  useWaterLevel,
+  getStatus,
+  getWaterColor,
+  TANK_INNER_H,
+} from "@/hooks/useWaterData";
 
 const MAX_VOLUME = 1000;
-const TANK_INNER_H = 230;
-
-function getStatus(vol: number) {
-  if (vol >= 700)
-    return { text: "Sufficient", color: "bg-green-50 text-green-600" };
-  if (vol >= 400)
-    return { text: "Low - refill soon", color: "bg-yellow-50 text-yellow-600" };
-  return { text: "Critical - refill now", color: "bg-red-50 text-red-600" };
-}
-
-function getWaterColor(pct: number) {
-  if (pct > 0.7)
-    return {
-      from: "rgba(56,189,248,0.65)",
-      to: "rgba(14,165,233,0.92)",
-      wave: "rgba(255,255,255,0.5)",
-    };
-  if (pct >= 0.4)
-    return {
-      from: "rgba(251,191,36,0.65)",
-      to: "rgba(245,158,11,0.92)",
-      wave: "rgba(255,255,255,0.45)",
-    };
-  return {
-    from: "rgba(248,113,113,0.65)",
-    to: "rgba(239,68,68,0.92)",
-    wave: "rgba(255,255,255,0.45)",
-  };
-}
 
 function Wave({ color }: { color: string }) {
   return (
@@ -86,7 +62,6 @@ function TankSVG() {
         strokeWidth="1.5"
         fill="none"
       />
-      {/* tutup atas */}
       <ellipse
         cx="90"
         cy="40"
@@ -105,7 +80,6 @@ function TankSVG() {
         stroke="#C8C8C8"
         strokeWidth="0.8"
       />
-
       <ellipse
         cx="90"
         cy="20"
@@ -125,7 +99,6 @@ function TankSVG() {
         stroke="#AAAAAA"
         strokeWidth="0.8"
       />
-
       {[85, 115, 145, 175].map((cy) => (
         <ellipse
           key={cy}
@@ -138,7 +111,6 @@ function TankSVG() {
           fill="none"
         />
       ))}
-
       <path
         d="M28 55 Q25 120 28 195"
         stroke="rgba(255,255,255,0.55)"
@@ -153,7 +125,6 @@ function TankSVG() {
         strokeLinecap="round"
         fill="none"
       />
-
       <ellipse
         cx="90"
         cy="210"
@@ -168,26 +139,39 @@ function TankSVG() {
 }
 
 export const WaterTank = () => {
-  const [volume, setVolume] = useState<number>(562);
+  const { volume, pct, lastUpdated, loading } = useWaterLevel();
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVolume((prev) => {
-        const next = prev + (Math.random() * 20 - 10);
-        return Math.round(Math.min(MAX_VOLUME, Math.max(50, next)));
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const pct = Math.min(volume / MAX_VOLUME, 1);
   const fillPx = Math.round(pct * TANK_INNER_H);
   const status = getStatus(volume);
   const wc = getWaterColor(pct);
 
+  const formattedTime = lastUpdated
+    ? new Date(lastUpdated).toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : "-";
+
+  if (loading) {
+    return (
+      <Card className="flex flex-col items-center">
+        <CardHeader className="w-full">
+          <CardTitle>Water Volume</CardTitle>
+          <CardDescription>Memuat data sensor...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center h-64">
+          <div className="text-muted-foreground text-sm animate-pulse">
+            Loading..
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="flex flex-col items-center">
-      <CardHeader className="w-full flex flex-row items-center justify-between ">
+    <Card>
+      <CardHeader className="w-full flex flex-row items-center justify-between">
         <div>
           <CardTitle>Water Volume</CardTitle>
           <CardDescription>
@@ -200,8 +184,10 @@ export const WaterTank = () => {
           {status.text}
         </span>
       </CardHeader>
-      <CardContent className="flex justify-center items-center ">
+
+      <CardContent className="flex justify-center items-center">
         <div className="relative w-54 h-80">
+          {/* Water fill */}
           <div
             className="absolute overflow-hidden transition-all duration-700 ease-in-out"
             style={{
@@ -245,13 +231,18 @@ export const WaterTank = () => {
             <li>• Below 400L</li>
             <li>• Tank is full</li>
           </ul>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Update: {formattedTime}
+          </p>
         </div>
+
         <div className="text-center mb-2">
           <span className="text-2xl font-semibold tabular-nums">
             {volume.toLocaleString()}
           </span>
           <span className="text-sm text-muted-foreground ml-1">L</span>
         </div>
+
         <p>
           <span className="text-xl font-medium text-gray-600">
             {Math.round(pct * 100)}%

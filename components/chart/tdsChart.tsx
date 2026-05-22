@@ -27,31 +27,10 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { useTdsData } from "@/hooks/useTdsData";
+import { useTDSChart, RangeType } from "@/hooks/useTdsAvg";
 
 export const description = "TDS Monitoring Chart";
-
-const chartData = [
-  { time: "1", tds: 800 },
-  { time: "2", tds: 820 },
-  { time: "3", tds: 780 },
-  { time: "4", tds: 900 },
-  { time: "5", tds: 870 },
-];
-
-const chartDataAvg = [
-  { period: "Jan", ph: 6.1 },
-  { period: "Feb", ph: 6.3 },
-  { period: "Mar", ph: 6.0 },
-  { period: "Apr", ph: 6.2 },
-  { period: "May", ph: 6.4 },
-  { period: "Jun", ph: 6.4 },
-  { period: "July", ph: 6.4 },
-  { period: "Aug", ph: 7.0 },
-  { period: "Sep", ph: 6.4 },
-  { period: "Oct", ph: 6.4 },
-  { period: "Nov", ph: 6.4 },
-  { period: "Des", ph: 5.0 },
-];
 
 const chartConfig = {
   tds: {
@@ -61,8 +40,22 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function ChartTDS() {
+  const { chartData, latestTds } = useTdsData();
+
+  const getTdsStatus = (tds: number | null) => {
+    if (tds === null)
+      return { label: "Loading...", color: "text-muted-foreground" };
+    if (tds > 860) return { label: "Over Nutrition", color: "text-yellow-500" };
+    if (tds >= 540 && tds <= 860)
+      return { label: "Normal TDS", color: "text-green-500" };
+    if (tds < 540) return { label: "High TDS", color: "text-blue-500" };
+    return { label: "Low TDS", color: "text-red-500" };
+  };
+
+  const status = getTdsStatus(latestTds);
+
   return (
-    <Card>
+    <Card className="">
       <CardHeader>
         <CardTitle>Total Dissolved Solids Status</CardTitle>
         <CardDescription>Nutrient concentration (ppm)</CardDescription>
@@ -74,7 +67,7 @@ export function ChartTDS() {
 
             <XAxis dataKey="time" tickLine={false} axisLine={false} />
 
-            <YAxis tickCount={5} axisLine={false} tickLine={false} />
+            <YAxis tickCount={6} axisLine={false} tickLine={false} />
 
             <ChartTooltip content={<ChartTooltipContent />} />
 
@@ -96,15 +89,16 @@ export function ChartTDS() {
         </ChartContainer>
       </CardContent>
 
-      <CardFooter className=" ">
-        <div className="flex  items-start gap-2 text-sm">
+      <CardFooter className="h-full ">
+        <div className="flex items-start gap-2 text-sm">
           <div className="grid gap-2">
-            <div className="flex items-center gap-2 font-medium">
-              Monitoring active
-              <TrendingUp className="h-4 w-4 text-green-500" />
+            <div
+              className={`flex items-center gap-2 font-medium ${status.color}`}
+            >
+              {status.label}
+              <TrendingUp className="h-4 w-4" />
             </div>
-
-            <div className="text-muted-foreground">Stable nutrient level</div>
+            <div className="text-muted-foreground">Rentang ideal: 540-860</div>
           </div>
         </div>
       </CardFooter>
@@ -113,7 +107,8 @@ export function ChartTDS() {
 }
 
 export function ChartTDSBar() {
-  const [range, setRange] = useState<"daily" | "weekly" | "monthly">("weekly");
+  const { range, setRange, chartData, avgTds, loading, error, tdsStatus } =
+    useTDSChart(3);
 
   return (
     <Card>
@@ -124,10 +119,9 @@ export function ChartTDSBar() {
         <div className="flex justify-end w-full">
           <Tabs
             value={range}
-            onValueChange={(val) => setRange(val as any)}
-            className=""
+            onValueChange={(val) => setRange(val as RangeType)}
           >
-            <TabsList className="grid grid-cols-3 w-[250px] ">
+            <TabsList className="grid grid-cols-3 w-62.5 ">
               <TabsTrigger value="daily">Daily</TabsTrigger>
               <TabsTrigger value="weekly">Weekly</TabsTrigger>
               <TabsTrigger value="monthly">Monthly</TabsTrigger>
@@ -136,31 +130,52 @@ export function ChartTDSBar() {
         </div>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="l">
-          <BarChart data={chartDataAvg} margin={{ top: 20 }}>
-            <CartesianGrid vertical={false} />
+        {loading ? (
+          <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+            Memuat data...
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-40 text-destructive text-sm">
+            {error}
+          </div>
+        ) : chartData.length === 0 ? (
+          <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+            Tidak ada data tersedia
+          </div>
+        ) : (
+          <ChartContainer config={chartConfig} className="l">
+            <BarChart data={chartData} margin={{ top: 20 }} height={250}>
+              <CartesianGrid vertical={false} />
 
-            <XAxis dataKey="period" tickLine={false} axisLine={false} />
-            {/* <YAxis tickCount={5} axisLine={false} tickLine={false} /> */}
+              <XAxis dataKey="period" tickLine={false} axisLine={false} />
 
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <Bar dataKey="ph" fill="#42A5F5" radius={8}>
-              <LabelList
-                position="top"
-                fontSize={12}
-                className="fill-foreground"
-              />
-            </Bar>
-          </BarChart>
-        </ChartContainer>
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <Bar dataKey="tds" fill="#42A5F5" radius={8}>
+                <LabelList
+                  position="top"
+                  dataKey="tds"
+                  fontSize={12}
+                  className="fill-foreground"
+                />
+              </Bar>
+            </BarChart>
+          </ChartContainer>
+        )}
       </CardContent>
 
-      <CardFooter className="flex-col items-start  h-full gap-2 text-sm">
+      <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium">
-          Stable pH trend <TrendingUp className="h-4 w-4 text-blue-500" />
+          Rata-rata TDS:{" "}
+          <span className="text-blue-500">
+            {avgTds !== null ? `${avgTds} ppm` : "-"}
+          </span>
+          <TrendingUp className="h-4 w-4 text-blue-500" />
         </div>
-
-        <div className="text-muted-foreground">Optimal range: 5.5 – 6.5</div>
+        <div className="text-muted-foreground">
+          Status:{" "}
+          <span className="font-medium text-foreground">{tdsStatus}</span> —
+          Optimal: &lt; 300 ppm
+        </div>
       </CardFooter>
     </Card>
   );

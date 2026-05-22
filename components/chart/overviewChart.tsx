@@ -143,9 +143,9 @@ export function OverviewCondition() {
           {statusData[2].value}% over the monitored period
         </div>
 
-        <div className="text-[10px] text-muted-foreground ">
+        {/* <div className="text-[10px] text-muted-foreground ">
           Last updated: {new Date().toLocaleTimeString()}
-        </div>
+        </div> */}
       </CardFooter>
     </Card>
   );

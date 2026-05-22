@@ -16,15 +16,14 @@ export const IdealCondition = () => {
       </CardHeader>
 
       <CardContent>
-        {/* detail */}
         <div className=" space-y-2 text-sm text-muted-foreground">
           <div className="flex justify-between items-center">
             <span className="text-black">pH Level</span>
-            <span className="font-medium">5.5 – 6.5</span>
+            <span className="font-medium">6.0 – 7.0</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-black">TDS</span>
-            <span className="font-medium">800 – 1200 ppm</span>
+            <span className="font-medium">540 – 860 ppm</span>
           </div>
 
           <div className="flex justify-between items-center">

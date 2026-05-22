@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Shield, Bell, Lock, ChevronRight, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
+
 const navTabs = [
   { id: "profile", label: "Profile", icon: "👤", desc: "Personal information" },
   {
@@ -21,9 +25,47 @@ const navTabs = [
 export const Setting = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [saved, setSaved] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
-  const handleSave = () => {
+  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: authData } = await supabase.auth.getUser();
+      const authUser = authData.user;
+      if (!authUser) return;
+      const { data: userData, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .single();
+      if (error) {
+        console.error("ERROR FETCH USER:", error.message);
+        return;
+      }
+      setUser(userData);
+      setForm({
+        name: userData?.name || "",
+        email: userData?.email || "",
+        phone: userData?.phone || "",
+      });
+    };
+    getUser();
+  }, []);
+
+  const handleSave = async () => {
     setSaved(true);
+    const { error } = await supabase
+      .from("users")
+      .update({
+        name: form.name,
+      })
+      .eq("user_id", user.user_id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Save Success");
+    }
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -80,7 +122,7 @@ export const Setting = () => {
                     <Avatar className="w-16 h-16 ring-2 ring-white shadow-md">
                       <AvatarImage src="/avatar.png" />
                       <AvatarFallback className="bg-[#1A3A2A] text-white text-lg font-medium">
-                        NA
+                        {user?.email?.[0]?.toUpperCase() || " U"}
                       </AvatarFallback>
                     </Avatar>
                     <button
@@ -96,12 +138,12 @@ export const Setting = () => {
 
                   <div className="flex-1">
                     <p className="text-[15px] font-medium text-gray-900">
-                      Nadiyah Amaliyah
+                      {user?.name}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1">
                       <Shield className="w-3 h-3 text-[#4CAF50]" />
                       <span className="text-[11px] text-[#4CAF50] font-medium">
-                        Super Admin
+                        {user?.role}
                       </span>
                     </div>
                   </div>
@@ -129,58 +171,62 @@ export const Setting = () => {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-5">
-                  {[
-                    {
-                      label: "Full Name",
-                      type: "text",
-                      placeholder: "Enter your full name",
-                      disabled: false,
-                    },
-                    {
-                      label: "Email Address",
-                      type: "email",
-                      placeholder: "Enter your email",
-                      disabled: false,
-                    },
-                    {
-                      label: "Phone Number",
-                      type: "tel",
-                      placeholder: "Enter your phone number",
-                      disabled: false,
-                    },
-                  ].map((field) => (
-                    <div key={field.label} className="space-y-1.5">
-                      <Label className="text-[12px] font-medium text-gray-600">
-                        {field.label}
-                      </Label>
-                      <Input
-                        type={field.type}
-                        placeholder={field.placeholder}
-                        disabled={field.disabled}
-                        className="
-                          h-9 text-[13px] rounded-lg
-                          border-gray-200 bg-gray-50/50
-                          focus:bg-white focus:border-[#4CAF50] focus:ring-[#4CAF50]/20
-                          placeholder:text-gray-300
-                          transition-all
-                        "
-                      />
-                    </div>
-                  ))}
+                  {/* NAME */}
+                  <div className="space-y-1.5">
+                    <Label className="text-[12px] font-medium text-gray-600">
+                      Full Name
+                    </Label>
+                    <Input
+                      type="text"
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm({ ...form, name: e.target.value })
+                      }
+                      className="h-9 text-[13px] rounded-lg"
+                    />
+                  </div>
 
+                  {/* EMAIL */}
+                  <div className="space-y-1.5">
+                    <Label className="text-[12px] font-medium text-gray-600">
+                      Email Address
+                    </Label>
+                    <Input
+                      type="email"
+                      value={form.email}
+                      disabled
+                      className="h-9 text-[13px] rounded-lg"
+                    />
+                  </div>
+
+                  {/* PHONE */}
+                  <div className="space-y-1.5">
+                    <Label className="text-[12px] font-medium text-gray-600">
+                      Phone Number
+                    </Label>
+                    <Input
+                      type="tel"
+                      value={form.phone}
+                      onChange={(e) =>
+                        setForm({ ...form, phone: e.target.value })
+                      }
+                      className="h-9 text-[13px] rounded-lg"
+                    />
+                  </div>
+
+                  {/* ROLE */}
                   <div className="space-y-1.5">
                     <Label className="text-[12px] font-medium text-gray-600">
                       Role
                     </Label>
-                    <div className="h-9 flex items-center px-3 rounded-lg bg-gray-100 border border-gray-200">
-                      <Shield className="w-3.5 h-3.5 text-[#4CAF50] mr-2 shrink-0" />
+                    <div className="h-9 flex items-center px-3 rounded-lg bg-gray-100 border">
+                      <Shield className="w-3.5 h-3.5 text-[#4CAF50] mr-2" />
                       <span className="text-[13px] text-gray-500">
-                        Super Admin
+                        {user?.role}
                       </span>
                     </div>
                   </div>
                 </div>
-
                 {/* Divider */}
                 <div className="h-px bg-gray-100 my-2" />
 

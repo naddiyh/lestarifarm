@@ -133,9 +133,11 @@
     @apply border-border outline-ring/50;
   }
   body {
+    width: 100vw;
+
     min-height: 100dvh;
     margin: 0;
-    overflow: hidden;
+    overflow-x: hidden;
     font-family: var(--font-sans);
     @apply bg-background text-foreground;
   }

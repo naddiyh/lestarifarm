@@ -1,13 +1,10 @@
 "use client";
-
 import {
   useReactTable,
   getCoreRowModel,
   getPaginationRowModel,
+  flexRender,
 } from "@tanstack/react-table";
-
-import { flexRender } from "@tanstack/react-table";
-
 import {
   Table,
   TableBody,
@@ -17,41 +14,40 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-import { data } from "./data";
-import { columns } from "./user_columns";
 import { Pagination } from "@/components/pagination/pagination";
+import { columns } from "./user_columns";
+import { useUsers } from "@/hooks/useUsers";
 
 const TableUser = () => {
+  const { users, loading, error, deleteUser } = useUsers();
+
   const table = useReactTable({
-    data,
-    columns,
+    data: users,
+    columns: columns(deleteUser),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: { pageSize: 5 },
-    },
+    initialState: { pagination: { pageSize: 5 } },
   });
 
+  if (loading)
+    return <p className="text-sm text-gray-400 py-4">Memuat data...</p>;
+  if (error) return <p className="text-sm text-red-500 py-4">{error}</p>;
+
   return (
-    <Table>
+    <Table className="bg-white">
       <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead key={header.id}>
-                {header.isPlaceholder
+        {table.getHeaderGroups().map((hg) => (
+          <TableRow key={hg.id}>
+            {hg.headers.map((h) => (
+              <TableHead key={h.id}>
+                {h.isPlaceholder
                   ? null
-                  : flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )}
+                  : flexRender(h.column.columnDef.header, h.getContext())}
               </TableHead>
             ))}
           </TableRow>
         ))}
       </TableHeader>
-
       <TableBody>
         {table.getRowModel().rows.map((row) => (
           <TableRow key={row.id}>
@@ -63,8 +59,7 @@ const TableUser = () => {
           </TableRow>
         ))}
       </TableBody>
-
-      <TableFooter className="">
+      <TableFooter>
         <TableRow>
           <TableCell colSpan={10}>
             <Pagination table={table} />

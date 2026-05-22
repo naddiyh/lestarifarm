@@ -13,7 +13,9 @@ import {
 import { Button } from "../../../components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 
-export const columns: ColumnDef<User>[] = [
+export const columns = (
+  deleteUser: (id: string) => Promise<void>,
+): ColumnDef<User>[] => [
   {
     id: "action",
     header: ({ table }) => (
@@ -88,7 +90,12 @@ export const columns: ColumnDef<User>[] = [
         <DropdownMenuContent align="end">
           <DropdownMenuItem className="text-green-600">Edit</DropdownMenuItem>
 
-          <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-red-600"
+            onClick={() => deleteUser(row.original.id)}
+          >
+            Delete
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),

@@ -1,16 +1,15 @@
-import { toast } from "react-toastify";
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 export const useAuth = () => {
   const [user, setUser] = useState<any>(null);
   const [isAutehnticated, setIsAuthenticated] = useState(false);
-
-  return useEffect(() => {
+  useEffect(() => {
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-      setIsAuthenticated(!!data.user);
+      const { data } = await supabase.auth.getSession();
+      setUser(data.session?.user ?? null);
+      setIsAuthenticated(!!data.session);
     };
 
     getUser();

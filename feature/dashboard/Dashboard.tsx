@@ -1,3 +1,5 @@
+"use client";
+
 import { Droplet, Thermometer, Waves } from "lucide-react";
 import { Widget } from "@/components/widget/widget";
 import { MapPin } from "lucide-react";
@@ -7,33 +9,67 @@ import { IdealCondition } from "@/components/forecast/idealCondition";
 import { ChartPhLine } from "@/components/chart/pHchart";
 import { WaterTank } from "@/components/chart/waterChart";
 import { TempAreaChart } from "@/components/chart/tempChart";
+import { useTempData } from "@/hooks/useTempData";
+import { usePhData } from "@/hooks/usePhData";
+import { useTdsData } from "@/hooks/useTdsData";
 
 export function Dashboard() {
+  const { latestTemp } = useTempData();
+  const { latestPh } = usePhData();
+  const { latestTds } = useTdsData();
+
+  const getTempStatus = (temp: number | null) => {
+    if (temp === null) return { label: "", color: "text-muted-foreground" };
+    if (temp >= 18 && temp <= 30)
+      return { label: "Normal", color: "text-green-400" };
+    if (temp < 18) return { label: "Too Cold", color: "text-blue-400" };
+    return { label: "Too Hot", color: "text-red-400" };
+  };
+
+  const statusTemp = getTempStatus(latestTemp);
+
+  const getPhStatus = (ph: number | null) => {
+    if (ph === null) return { label: "", color: "text-muted-foreground" };
+    if (ph >= 6 && ph <= 7) return { label: "Normal", color: "text-green-400" };
+    if (ph < 6) return { label: "Low", color: "text-blue-400" };
+    return { label: "High", color: "text-red-400" };
+  };
+  const statusPh = getPhStatus(latestPh);
+
+  const getTdsStatus = (tds: number | null) => {
+    if (tds === null) return { label: "", color: "text-muted-foreground" };
+    if (tds >= 540 && tds <= 860)
+      return { label: "Normal", color: "text-green-400" };
+    if (tds < 540) return { label: "Low", color: "text-blue-400" };
+    return { label: "High", color: "text-red-400" };
+  };
+  const statusTds = getTdsStatus(latestTds);
+
   const widgets = [
     {
       name: "pH",
       desc: "Measures the acidity level of the water",
-      value: "6.0 ",
+      value: latestPh !== null ? latestPh.toFixed(1) : "--",
       satuan: " pH",
       pict: <Droplet className="text-white w-5 h-5 " strokeWidth={1.5} />,
-      result: "Low",
+      result: statusPh.label,
     },
     {
       name: "TDS",
       desc: "Indicates nutrient concentration in water",
-      value: "800 ",
+      value: latestTds !== null ? latestTds.toFixed(1) : "--",
       pict: <Droplet className="w-5 text-white h-5 " strokeWidth={1.5} />,
       satuan: " ppm",
-      result: "Low",
+      result: statusTds.label,
     },
 
     {
       name: "Temperature",
       desc: "Current water temperature for plant growth",
-      value: "20.5 ",
+      value: latestTemp !== null ? latestTemp.toFixed(1) : "--",
       pict: <Thermometer className="w-5 text-white h-5 " strokeWidth={1.5} />,
       satuan: " °c",
-      result: "Low",
+      result: statusTemp.label,
     },
   ];
 
@@ -76,7 +112,7 @@ export function Dashboard() {
             <span className="text-xs">BTP, Makassar</span>
           </div>
 
-          <div className="absolute bottom-30 left-1/2 -translate-x-1/2 z-10 w-full   px-8">
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 w-full   px-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {widgets.map((item, index) => (
                 <Widget
@@ -98,10 +134,10 @@ export function Dashboard() {
           <Forecast />
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
         <WaterTank />
-        <ChartTDS />
         <ChartPhLine />
+        <ChartTDS />
         <TempAreaChart />
       </div>
     </main>

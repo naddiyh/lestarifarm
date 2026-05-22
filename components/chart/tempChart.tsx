@@ -1,7 +1,16 @@
 "use client";
 
 import { TrendingUp } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Bar,
+  LabelList,
+  BarChart,
+} from "recharts";
 import { useState } from "react";
 import {
   Card,
@@ -11,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import {
   ChartContainer,
   ChartTooltip,
@@ -18,30 +28,10 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTempChart, RangeType } from "@/hooks/useTempAvg";
+import { useTempData } from "@/hooks/useTempData";
+
 export const description = "An area chart with gradient fill";
-
-const chartDataAvg = [
-  { period: "Jan", temp: 6.1 },
-  { period: "Feb", temp: 6.3 },
-  { period: "Mar", temp: 6.0 },
-  { period: "Apr", temp: 6.2 },
-  { period: "May", temp: 6.4 },
-  { period: "Jun", temp: 6.4 },
-  { period: "July", temp: 6.4 },
-  { period: "Aug", temp: 7.0 },
-  { period: "Sep", temp: 6.4 },
-  { period: "Oct", temp: 6.4 },
-  { period: "Nov", temp: 6.4 },
-  { period: "Des", temp: 5.0 },
-];
-
-const chartData = [
-  { time: "1", temp: 24.5 },
-  { time: "2", temp: 22.3 },
-  { time: "3", temp: 29.7 },
-  { time: "4", temp: 29.4 },
-  { time: "5", temp: 26.4 },
-];
 
 const chartConfig = {
   temp: {
@@ -51,7 +41,9 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function AvgTempChart() {
-  const [range, setRange] = useState<"daily" | "weekly" | "monthly">("weekly");
+  const { range, setRange, chartData, avgTemp, loading, error, tempStatus } =
+    useTempChart(2);
+
   return (
     <Card>
       <CardHeader>
@@ -60,10 +52,9 @@ export function AvgTempChart() {
         <div className="flex justify-end w-full">
           <Tabs
             value={range}
-            onValueChange={(val) => setRange(val as any)}
-            className=""
+            onValueChange={(val) => setRange(val as RangeType)}
           >
-            <TabsList className="grid grid-cols-3 w-[250px] ">
+            <TabsList className="grid grid-cols-3 w-62.5 ">
               <TabsTrigger value="daily">Daily</TabsTrigger>
               <TabsTrigger value="weekly">Weekly</TabsTrigger>
               <TabsTrigger value="monthly">Monthly</TabsTrigger>
@@ -72,30 +63,37 @@ export function AvgTempChart() {
         </div>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className=" ">
-          <AreaChart data={chartDataAvg} margin={{ right: 12 }}>
-            <CartesianGrid stroke="#E0EED8" vertical={false} />
+        {loading ? (
+          <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+            Memuat data...
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-40 text-destructive text-sm">
+            {error}
+          </div>
+        ) : chartData.length === 0 ? (
+          <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+            Tidak ada data tersedia
+          </div>
+        ) : (
+          <ChartContainer config={chartConfig} className="l">
+            <BarChart data={chartData} margin={{ top: 20 }} height={250}>
+              <CartesianGrid vertical={false} />
 
-            <XAxis dataKey="period" tickLine={false} axisLine={false} />
+              <XAxis dataKey="period" tickLine={false} axisLine={false} />
 
-            <ChartTooltip content={<ChartTooltipContent />} />
-
-            <defs>
-              <linearGradient id="fillTemp" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#66BB6A" stopOpacity={0.6} />
-                <stop offset="95%" stopColor="#66BB6A" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <Area
-              dataKey="temp"
-              type="monotone"
-              fill="url(#fillTemp)"
-              stroke="#66BB6A"
-              strokeWidth={2}
-              dot={true}
-            />
-          </AreaChart>
-        </ChartContainer>
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <Bar dataKey="temp" fill="#42A5F5" radius={8}>
+                <LabelList
+                  position="top"
+                  dataKey="temp"
+                  fontSize={12}
+                  className="fill-foreground"
+                />
+              </Bar>
+            </BarChart>
+          </ChartContainer>
+        )}
       </CardContent>
 
       <CardFooter className="h-full ">
@@ -114,23 +112,48 @@ export function AvgTempChart() {
 }
 
 export function TempAreaChart() {
+  const { chartData, latestTemp } = useTempData();
+
+  const getTempStatus = (temp: number | null) => {
+    if (temp === null)
+      return { label: "Loading...", color: "text-muted-foreground" };
+    if (temp >= 18 && temp <= 30)
+      return { label: "Normal Temperature", color: "text-green-500" };
+    if (temp < 18) return { label: "High Temperature", color: "text-blue-500" };
+    return { label: "Low Temperature", color: "text-red-500" };
+  };
+
+  const status = getTempStatus(latestTemp);
+
   return (
-    <Card>
+    <Card className="">
       <CardHeader>
         <CardTitle>Temperature Water</CardTitle>
-        <CardDescription>Nutrient concentration (ppm)</CardDescription>
+
+        <CardDescription>Monitoring suhu real-time</CardDescription>
       </CardHeader>
+
       <CardContent>
-        <ChartContainer config={chartConfig} className=" w-full ">
+        <ChartContainer config={chartConfig} className="w-full">
           <AreaChart data={chartData} margin={{ right: 12 }}>
             <CartesianGrid stroke="#E0EED8" vertical={false} />
 
-            <XAxis dataKey="time" tickLine={false} axisLine={false} />
+            <XAxis
+              dataKey="time"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 11 }}
+            />
 
-            <YAxis tickCount={5} axisLine={false} tickLine={false} />
-
+            <YAxis
+              domain={[0, 50]}
+              tickCount={6}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 11 }}
+              tickFormatter={(v) => `${v}°`}
+            />
             <ChartTooltip content={<ChartTooltipContent />} />
-
             <defs>
               <linearGradient id="fillTemp" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#66BB6A" stopOpacity={0.6} />
@@ -149,15 +172,18 @@ export function TempAreaChart() {
         </ChartContainer>
       </CardContent>
 
-      <CardFooter className="h-full ">
-        <div className="flex  items-start gap-2 text-sm">
+      <CardFooter className="h-full">
+        <div className="flex items-start gap-2 text-sm">
           <div className="grid gap-2">
-            <div className="flex items-center gap-2 font-medium">
-              Monitoring active
-              <TrendingUp className="h-4 w-4 text-green-500" />
+            <div
+              className={`flex items-center gap-2 font-medium ${status.color}`}
+            >
+              {status.label}
+              <TrendingUp className="h-4 w-4" />
             </div>
-
-            <div className="text-muted-foreground">Stable nutrient level</div>
+            <div className="text-muted-foreground">
+              Rentang ideal: 18°C – 30°C
+            </div>
           </div>
         </div>
       </CardFooter>
