@@ -17,7 +17,6 @@ import {
 } from "../ui/card";
 import { usePrediksi, LevelUrgensi } from "@/hooks/usePredict";
 
-// ── Level config ──────────────────────────────────────────────
 const LEVEL_CONFIG: Record<
   LevelUrgensi,
   {
@@ -33,35 +32,35 @@ const LEVEL_CONFIG: Record<
     alertBg: "bg-green-50",
     border: "border-green-200",
     text: "text-green-600",
-    label: "NORMAL",
+    label: "Normal",
   },
   Monitor: {
     badge: "bg-yellow-100 text-yellow-700",
     alertBg: "bg-yellow-50",
     border: "border-yellow-200",
     text: "text-yellow-600",
-    label: "MONITOR",
+    label: "Monitor",
   },
   ActSoon: {
     badge: "bg-orange-100 text-orange-700",
     alertBg: "bg-orange-50",
     border: "border-orange-200",
     text: "text-orange-500",
-    label: "ACT SOON",
+    label: "Act Soon",
   },
   Critical: {
     badge: "bg-red-100 text-red-700",
     alertBg: "bg-red-50",
     border: "border-red-200",
     text: "text-red-500",
-    label: "CRITICAL",
+    label: "Critical",
   },
   Excess: {
     badge: "bg-red-100 text-red-700",
     alertBg: "bg-red-50",
     border: "border-red-200",
     text: "text-red-500",
-    label: "EXCESS",
+    label: "Excess",
   },
 };
 
@@ -69,8 +68,9 @@ const PPM_MIN = 540;
 const PPM_MAX = 860;
 const PPM_TARGET = 700;
 
-// ── Helpers ───────────────────────────────────────────────────
-function TrendIcon({ deviasi }: { deviasi: number }) {
+function TrendIcon({ deviasi, level }: { deviasi: number; level: string }) {
+  if (level === "Excess")
+    return <TrendingUp className="w-6 h-6 text-red-400    shrink-0" />;
   if (deviasi > 5)
     return <TrendingDown className="w-6 h-6 text-orange-400 shrink-0" />;
   if (deviasi < -5)
@@ -115,11 +115,11 @@ function getAlertMessage(
     case "Normal":
       return "Nutrient levels are optimal. No action needed.";
     case "Monitor":
-      return `Nutrient level is dropping. Prepare dosing within 30 minutes.`;
+      return "Nutrient level is dropping. Prepare dosing within 30 minutes.";
     case "ActSoon":
       return `Nutrient level will drop below optimal in ${waktuLabel}. Dose now.`;
     case "Critical":
-      return `Critical nutrient level! Manual intervention required immediately.`;
+      return "Critical nutrient level! Manual intervention required immediately.";
     case "Excess":
       return "Nutrient level is too high. Consider diluting with water.";
     default:
@@ -127,11 +127,9 @@ function getAlertMessage(
   }
 }
 
-// ── Main component ────────────────────────────────────────────
 export const Forecast = () => {
   const { data, loading, error, updatedAt, refetch } = usePrediksi();
 
-  // Loading state
   if (loading && !data) {
     return (
       <Card className="relative overflow-hidden shadow-sm">
@@ -155,7 +153,6 @@ export const Forecast = () => {
     );
   }
 
-  // Error state
   if (error && !data) {
     return (
       <Card className="relative overflow-hidden shadow-sm">
@@ -190,8 +187,8 @@ export const Forecast = () => {
   if (!data) return null;
 
   const { sensor, prediksi, forecast, rekomendasi_dosis } = data;
-  const level = prediksi.level_urgensi;
-  const cfg = LEVEL_CONFIG[level];
+  const level = prediksi.level_urgensi as LevelUrgensi;
+  const cfg = LEVEL_CONFIG[level] ?? LEVEL_CONFIG["Normal"];
   const deviasi = prediksi.deviasi_persen;
   const confidence = prediksi.confidence;
   const trendColor =
@@ -205,14 +202,12 @@ export const Forecast = () => {
     ? `${forecast.waktu_kritis_mnt} minutes`
     : `> ${forecast.prediksi_list.length * forecast.interval_menit} minutes`;
 
-  // Only show first 3 forecast steps
   const forecastSlice = forecast.prediksi_list.slice(0, 3);
 
   return (
     <Card className="relative overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
       <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
 
-      {/* Header */}
       <CardHeader className="pb-1">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -240,21 +235,12 @@ export const Forecast = () => {
         <div
           className={`flex items-center gap-3 p-3 rounded-lg border ${cfg.alertBg} ${cfg.border}`}
         >
-          <TrendIcon deviasi={deviasi} />
+          <TrendIcon deviasi={deviasi} level={level} />
           <p className={`text-sm font-medium ${cfg.text}`}>
             {getAlertMessage(level, prediksi.pesan, waktuLabel)}
           </p>
         </div>
 
-        {/* Trend */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Trend</span>
-          <span className={`font-medium ${trendColor}`}>
-            {getTrendText(deviasi)}
-          </span>
-        </div>
-
-        {/* Divider */}
         <div className="h-px bg-border" />
 
         {/* Nutrient forecast bars */}
@@ -263,7 +249,7 @@ export const Forecast = () => {
             Nutrient forecast
           </p>
 
-          {/* Current actual */}
+          {/* Now */}
           <div className="flex items-center gap-2 text-sm">
             <span className="w-16 text-muted-foreground shrink-0 text-xs">
               Now
@@ -290,7 +276,7 @@ export const Forecast = () => {
             </span>
           </div>
 
-          {/* 3 forecast steps */}
+          {/* Forecast steps */}
           {forecastSlice.map((ppm, i) => (
             <div key={i} className="flex items-center gap-2 text-sm">
               <span className="w-16 text-muted-foreground shrink-0 text-xs">
@@ -321,21 +307,33 @@ export const Forecast = () => {
             </div>
           ))}
 
-          {/* Range info */}
           <p className="text-[10px] text-muted-foreground">
             Target: {PPM_TARGET} ppm &nbsp;|&nbsp; Safe range: {PPM_MIN}–
             {PPM_MAX} ppm
           </p>
         </div>
 
-        {/* Divider */}
         <div className="h-px bg-border" />
 
         {/* Recommended actions */}
         <div className="space-y-2">
           <p className="text-sm font-medium">Recommended Action</p>
 
-          {rekomendasi_dosis.v_pupuk_total_mL > 0 ? (
+          {level === "Excess" ? (
+            // TDS terlalu tinggi → encerkan
+            <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-200">
+              <div>
+                <p className="text-sm font-medium text-red-700">
+                  Dilute with clean water
+                </p>
+                <p className="text-xs text-red-400">
+                  Stop dosing — add fresh water to lower TDS
+                </p>
+              </div>
+              <span className="text-lg text-red-400">⚠</span>
+            </div>
+          ) : rekomendasi_dosis.v_pupuk_total_mL > 0 ? (
+            // Kurang nutrisi → tambah pupuk
             <>
               {[
                 {
@@ -373,6 +371,7 @@ export const Forecast = () => {
               </p>
             </>
           ) : (
+            // Normal → tidak perlu tindakan
             <div
               className="flex items-center justify-between p-3 rounded-lg"
               style={{ background: "#1A3A2A" }}

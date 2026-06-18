@@ -1,11 +1,10 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const SENSOR_ID = 4;
-const TANK_HEIGHT_CM = 100;
-const MAX_VOLUME = 1000;
+const TANK_HEIGHT_CM = 70;
+const MAX_VOLUME = 700; // 100cm × 100cm × 70cm = 700.000 mL = 700 liter
 export const TANK_INNER_H = 230;
 
 export function sensorToVolume(jarakCm: number): number {
@@ -15,9 +14,11 @@ export function sensorToVolume(jarakCm: number): number {
 }
 
 export function getStatus(vol: number) {
-  if (vol >= 700)
+  if (vol >= 490)
+    // >= 70% dari 700L
     return { text: "Sufficient", color: "bg-green-50 text-green-600" };
-  if (vol >= 400)
+  if (vol >= 280)
+    // >= 40% dari 700L
     return { text: "Low - refill soon", color: "bg-yellow-50 text-yellow-600" };
   return { text: "Critical - refill now", color: "bg-red-50 text-red-600" };
 }
@@ -55,7 +56,6 @@ export function useWaterLevel(): WaterLevelState {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch nilai terbaru saat mount
     const fetchLatest = async () => {
       const { data, error } = await supabase
         .from("sensor_data")
@@ -74,7 +74,6 @@ export function useWaterLevel(): WaterLevelState {
 
     fetchLatest();
 
-    // Realtime subscription — INSERT baru dari sensor_id = 4
     const channel = supabase
       .channel("water-level-realtime")
       .on(
@@ -98,6 +97,5 @@ export function useWaterLevel(): WaterLevelState {
   }, []);
 
   const pct = Math.min(volume / MAX_VOLUME, 1);
-
   return { volume, pct, lastUpdated, loading };
 }

@@ -15,7 +15,7 @@ import {
   TANK_INNER_H,
 } from "@/hooks/useWaterData";
 
-const MAX_VOLUME = 1000;
+const MAX_VOLUME = 700;
 
 function Wave({ color }: { color: string }) {
   return (
@@ -145,24 +145,28 @@ export const WaterTank = () => {
   const status = getStatus(volume);
   const wc = getWaterColor(pct);
 
-  const formattedTime = lastUpdated
-    ? new Date(lastUpdated).toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
-    : "-";
+  // SESUDAH — pisahkan fungsi dan variabel
+  const formatTime = (iso: string) => {
+    const date = new Date(iso.endsWith("Z") ? iso : iso + "Z");
+    return date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZone: "Asia/Makassar",
+    });
+  };
 
+  const formattedTime = lastUpdated ? formatTime(lastUpdated) : "-";
   if (loading) {
     return (
       <Card className="flex flex-col items-center">
         <CardHeader className="w-full">
           <CardTitle>Water Volume</CardTitle>
-          <CardDescription>Memuat data sensor...</CardDescription>
+          <CardDescription>Loading sensor data...</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center items-center h-64">
           <div className="text-muted-foreground text-sm animate-pulse">
-            Loading..
+            Loading...
           </div>
         </CardContent>
       </Card>
@@ -211,11 +215,12 @@ export const WaterTank = () => {
 
           <TankSVG />
 
+          {/* Volume labels */}
           <div
             className="absolute flex flex-col justify-between pointer-events-none"
             style={{ right: "-35px", top: "42px", bottom: "22px" }}
           >
-            {["1000L", "750L", "500L", "250L", "0L"].map((l) => (
+            {["700L", "525L", "350L", "175L", "0L"].map((l) => (
               <span key={l} className="text-sm text-gray-500 leading-none">
                 {l}
               </span>
@@ -228,11 +233,11 @@ export const WaterTank = () => {
         <div>
           <p className="text-xs font-medium mb-0.5">Alert will be sent:</p>
           <ul className="text-xs text-muted-foreground space-y-0.5">
-            <li>• Below 400L</li>
+            <li>• Below 280L (40%)</li>
             <li>• Tank is full</li>
           </ul>
           <p className="text-[10px] text-muted-foreground mt-1">
-            Update: {formattedTime}
+            Updated: {formattedTime}
           </p>
         </div>
 
@@ -247,7 +252,7 @@ export const WaterTank = () => {
           <span className="text-xl font-medium text-gray-600">
             {Math.round(pct * 100)}%
           </span>
-          <span className="text-sm text-muted-foreground ml-1">terisi</span>
+          <span className="text-sm text-muted-foreground ml-1">filled</span>
         </p>
       </CardFooter>
     </Card>
