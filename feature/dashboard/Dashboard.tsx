@@ -14,9 +14,12 @@ import { usePhData } from "@/hooks/usePhData";
 import { useTdsData } from "@/hooks/useTdsData";
 
 export function Dashboard() {
-  const { latestTemp } = useTempData();
   const { latestPh } = usePhData();
   const { latestTds } = useTdsData();
+  const { latestTemp, latestTimestamp } = useTempData();
+  const isOffline = latestTimestamp
+    ? Date.now() - new Date(latestTimestamp).getTime() > 10 * 60 * 1000
+    : false;
 
   const getTempStatus = (temp: number | null) => {
     if (temp === null) return { label: "", color: "text-muted-foreground" };
@@ -92,9 +95,12 @@ export function Dashboard() {
 
           <div className="absolute top-4 left-4 z-10">
             <div className="flex items-center justify-center gap-2">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-
-              <p className="text-sm mt-1">Lettuce Nutrition Normal</p>
+              <span
+                className={`w-2 h-2 rounded-full animate-pulse ${isOffline ? "bg-red-400" : "bg-green-400"}`}
+              />
+              <p className="text-sm mt-1">
+                {isOffline ? "Sensor Offline" : "Lettuce Nutrition Normal"}
+              </p>
             </div>
           </div>
 

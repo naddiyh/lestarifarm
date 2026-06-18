@@ -1,15 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Shield, Bell, Lock, ChevronRight, Check } from "lucide-react";
+import { Bell, Lock, ChevronRight, Shield } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { supabase } from "@/lib/supabase";
-import { useEffect } from "react";
-import { toast } from "react-toastify";
+import { useProfile } from "@/hooks/useProfile";
+import { ProfileAvatar } from "./components/ProfileAvatar";
+import { ProfileForm } from "./components/ProfileForm";
 
 const navTabs = [
   { id: "profile", label: "Profile", icon: "👤", desc: "Personal information" },
@@ -24,54 +20,17 @@ const navTabs = [
 
 export const Setting = () => {
   const [activeTab, setActiveTab] = useState("profile");
-  const [saved, setSaved] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const { user, loading, uploading, updateProfile, uploadPhoto } = useProfile();
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: authData } = await supabase.auth.getUser();
-      const authUser = authData.user;
-      if (!authUser) return;
-      const { data: userData, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("user_id", authUser.id)
-        .single();
-      if (error) {
-        console.error("ERROR FETCH USER:", error.message);
-        return;
-      }
-      setUser(userData);
-      setForm({
-        name: userData?.name || "",
-        email: userData?.email || "",
-        phone: userData?.phone || "",
-      });
-    };
-    getUser();
-  }, []);
-
-  const handleSave = async () => {
-    setSaved(true);
-    const { error } = await supabase
-      .from("users")
-      .update({
-        name: form.name,
-      })
-      .eq("user_id", user.user_id);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Save Success");
-    }
-    setTimeout(() => setSaved(false), 2000);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadPhoto(file);
   };
 
   return (
-    <div className="">
-      <div className=" pb-6">
+    <div>
+      {/* Header */}
+      <div className="pb-6">
         <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight">
           Settings
         </h1>
@@ -81,13 +40,13 @@ export const Setting = () => {
       </div>
 
       <div className="pb-8 flex gap-6 items-start">
-        {/* left*/}
-        <div className="w-52 shrink-0 bg-white rounded-2xl  overflow-hidden shadow-sm">
+        {/* Sidebar nav */}
+        <div className="w-52 shrink-0 bg-white rounded-2xl overflow-hidden shadow-sm">
           {navTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all  ${
+              className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all ${
                 activeTab === tab.id
                   ? "bg-[#F0FAF0] border-l-[#4CAF50] text-gray-900"
                   : "border-l-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-700"
@@ -113,162 +72,58 @@ export const Setting = () => {
 
         {/* Right content */}
         <div className="flex-1 space-y-4">
+          {/* ── PROFILE TAB ── */}
           {activeTab === "profile" && (
             <>
               {/* Avatar card */}
-              <Card className="  p-6 ">
-                <div className="flex items-center gap-5">
-                  <div className="relative group">
-                    <Avatar className="w-16 h-16 ring-2 ring-white shadow-md">
-                      <AvatarImage src="/avatar.png" />
-                      <AvatarFallback className="bg-[#1A3A2A] text-white text-lg font-medium">
-                        {user?.email?.[0]?.toUpperCase() || " U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <button
-                      className="
-                      absolute inset-0 rounded-full
-                      bg-black/40 opacity-0 group-hover:opacity-100
-                      transition-opacity flex items-center justify-center
-                    "
-                    >
-                      <Camera className="w-4 h-4 text-white" />
-                    </button>
-                  </div>
-
-                  <div className="flex-1">
-                    <p className="text-[15px] font-medium text-gray-900">
-                      {user?.name}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <Shield className="w-3 h-3 text-[#4CAF50]" />
-                      <span className="text-[11px] text-[#4CAF50] font-medium">
-                        {user?.role}
-                      </span>
+              <Card className="p-6">
+                {loading || !user ? (
+                  <div className="flex items-center gap-5 animate-pulse">
+                    <div className="w-16 h-16 rounded-full bg-gray-200" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-gray-200 rounded" />
+                      <div className="h-3 w-20 bg-gray-200 rounded" />
                     </div>
                   </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs  text-gray-600 hover:bg-gray-50 rounded-lg"
-                  >
-                    <Camera className="w-3.5 h-3.5 mr-1.5" />
-                    Change Photo
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-5">
+                    <ProfileAvatar
+                      name={user.name}
+                      img={user.img}
+                      uploading={uploading}
+                      onFileChange={handleFileChange}
+                    />
+                    <div className="flex-1">
+                      <p className="text-[15px] font-medium text-gray-900">
+                        {user.name}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Shield className="w-3 h-3 text-[#4CAF50]" />
+                        <span className="text-[11px] text-[#4CAF50] font-medium">
+                          {user.role}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </Card>
 
               {/* Form card */}
-              <Card className=" p-6">
-                <div className="mb-5">
-                  <h2 className="text-[13.5px] font-medium text-gray-800">
-                    Personal Information
-                  </h2>
-                  <p className="text-[11.5px] text-gray-400 mt-0.5">
-                    Update your profile details below
-                  </p>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-5">
-                  {/* NAME */}
-                  <div className="space-y-1.5">
-                    <Label className="text-[12px] font-medium text-gray-600">
-                      Full Name
-                    </Label>
-                    <Input
-                      type="text"
-                      value={form.name}
-                      onChange={(e) =>
-                        setForm({ ...form, name: e.target.value })
-                      }
-                      className="h-9 text-[13px] rounded-lg"
-                    />
+              <Card className="p-6">
+                {loading || !user ? (
+                  <div className="space-y-4 animate-pulse">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="h-9 bg-gray-100 rounded-lg" />
+                    ))}
                   </div>
-
-                  {/* EMAIL */}
-                  <div className="space-y-1.5">
-                    <Label className="text-[12px] font-medium text-gray-600">
-                      Email Address
-                    </Label>
-                    <Input
-                      type="email"
-                      value={form.email}
-                      disabled
-                      className="h-9 text-[13px] rounded-lg"
-                    />
-                  </div>
-
-                  {/* PHONE */}
-                  <div className="space-y-1.5">
-                    <Label className="text-[12px] font-medium text-gray-600">
-                      Phone Number
-                    </Label>
-                    <Input
-                      type="tel"
-                      value={form.phone}
-                      onChange={(e) =>
-                        setForm({ ...form, phone: e.target.value })
-                      }
-                      className="h-9 text-[13px] rounded-lg"
-                    />
-                  </div>
-
-                  {/* ROLE */}
-                  <div className="space-y-1.5">
-                    <Label className="text-[12px] font-medium text-gray-600">
-                      Role
-                    </Label>
-                    <div className="h-9 flex items-center px-3 rounded-lg bg-gray-100 border">
-                      <Shield className="w-3.5 h-3.5 text-[#4CAF50] mr-2" />
-                      <span className="text-[13px] text-gray-500">
-                        {user?.role}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {/* Divider */}
-                <div className="h-px bg-gray-100 my-2" />
-
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] text-gray-400">
-                    Last updated: 2 days ago
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-[12px] text-gray-500 hover:text-gray-700 rounded-lg"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSave}
-                      className={`
-                        text-[12px] rounded-lg px-4 transition-all duration-300
-                        ${
-                          saved
-                            ? "bg-green-500 text-white"
-                            : "bg-[#1A3A2A] hover:bg-[#2D5A27] text-white"
-                        }
-                      `}
-                    >
-                      {saved ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 mr-1.5" />
-                          Saved!
-                        </>
-                      ) : (
-                        "Save Changes"
-                      )}
-                    </Button>
-                  </div>
-                </div>
+                ) : (
+                  <ProfileForm user={user} onSave={updateProfile} />
+                )}
               </Card>
             </>
           )}
 
+          {/* ── NOTIFICATIONS TAB ── */}
           {activeTab === "notifications" && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
               <Bell className="w-8 h-8 text-gray-300 mx-auto mb-3" />
@@ -279,6 +134,7 @@ export const Setting = () => {
             </div>
           )}
 
+          {/* ── SECURITY TAB ── */}
           {activeTab === "security" && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
               <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />

@@ -11,6 +11,7 @@ type ChartPoint = { time: string; temp: number };
 export function useTempData() {
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [latestTemp, setLatestTemp] = useState<number | null>(null);
+  const [latestTimestamp, setLatestTimestamp] = useState<string | null>(null); // ← tambah ini
 
   const formatTime = (iso: string) => {
     const date = new Date(iso.endsWith("Z") ? iso : iso + "Z");
@@ -34,14 +35,15 @@ export function useTempData() {
         .limit(MAX_DATA_POINTS);
 
       if (error || !isMounted) return;
-
       if (data && data.length > 0) {
+        const latestRaw = data[0].created_at;
         const formatted = data.reverse().map((row) => ({
           time: formatTime(row.created_at),
           temp: row.value ?? 0,
         }));
         setChartData(formatted);
         setLatestTemp(formatted[formatted.length - 1].temp);
+        setLatestTimestamp(latestRaw); // ← sudah ada
       }
     };
 
@@ -73,6 +75,7 @@ export function useTempData() {
               : updated;
           });
           setLatestTemp(row.value);
+          setLatestTimestamp(row.created_at); // ← tambah ini
         },
       )
       .subscribe();
@@ -83,5 +86,5 @@ export function useTempData() {
     };
   }, []);
 
-  return { chartData, latestTemp };
+  return { chartData, latestTemp, latestTimestamp }; // ← tambah latestTimestamp
 }

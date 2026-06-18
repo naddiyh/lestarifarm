@@ -22,7 +22,7 @@ import {
 
 import { NavUser } from "./nav-user";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const data = {
   user: {
@@ -61,6 +61,13 @@ const items = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSignOut = () => {
+    // kalau pakai NextAuth: signOut({ callbackUrl: "/login" })
+    // kalau manual, clear token lalu redirect:
+    router.push("/login");
+  };
 
   return (
     <Sidebar>
@@ -78,7 +85,6 @@ export function AppSidebar() {
             <div className="bg-white/20 p-2 rounded-lg">
               <Leaf className="text-white w-5 h-5" />
             </div>
-
             <div>
               <p className="text-white text-sm font-semibold">Lestari Farm</p>
               <p className="text-xs text-white/70">Hydroponic Monitoring</p>
@@ -108,25 +114,18 @@ export function AppSidebar() {
                         `}
                       >
                         <span className="text-base">{item.icon}</span>
-
                         <div className="flex-1">
                           <p
-                            className={`text-[13px] font-medium leading-tight ${
-                              isActive ? "text-gray-900" : "text-white/80"
-                            }`}
+                            className={`text-[13px] font-medium leading-tight ${isActive ? "text-gray-900" : "text-white/80"}`}
                           >
                             {item.title}
                           </p>
-
                           <p
-                            className={`text-[10.5px] ${
-                              isActive ? "text-gray-500" : "text-white/50"
-                            }`}
+                            className={`text-[10.5px] ${isActive ? "text-gray-500" : "text-white/50"}`}
                           >
                             {item.desc}
                           </p>
                         </div>
-
                         {isActive && (
                           <ChevronRight className="w-4 h-4 text-[#4CAF50]" />
                         )}
@@ -139,11 +138,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* FOOTER */}
         <SidebarFooter className="mt-auto px-2 pb-3">
           <div className="mb-3 h-px bg-linear-to-r from-transparent via-white/30 to-transparent" />
-
-          <NavUser user={data.user} />
+          <NavUser user={data.user} onSignOut={handleSignOut} />
         </SidebarFooter>
       </SidebarContent>
     </Sidebar>

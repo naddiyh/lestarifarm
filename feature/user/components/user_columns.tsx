@@ -1,17 +1,13 @@
+// user_columns.tsx
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Avatar, AvatarImage } from "../../../components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../../../components/ui/avatar";
 import type { User } from "@/interface/userType";
 import { Checkbox } from "../../../components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "../../../components/ui/dropdown-menu";
 import { Button } from "../../../components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { Badge } from "../../../components/ui/badge";
 
 export const columns = (
   deleteUser: (id: string) => Promise<void>,
@@ -35,69 +31,80 @@ export const columns = (
         aria-label="Select row"
       />
     ),
-    enableSorting: true,
+    enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: " img ",
+    accessorKey: "img",
     header: "Profile",
     cell: ({ row }) => (
-      <Avatar className="h-10 w-10">
+      <Avatar className="h-9 w-9 rounded-lg border border-gray-200">
         <AvatarImage
-          className=" rounded-md "
+          className="rounded-lg object-cover"
           src={row.original.img || "/default-avatar.png"}
         />
+        <AvatarFallback className="rounded-lg bg-[#264c43] text-white text-xs font-semibold">
+          {row.original.name?.charAt(0).toUpperCase() ?? "U"}
+        </AvatarFallback>
       </Avatar>
     ),
   },
   {
     accessorKey: "name",
     header: "Name",
+    cell: ({ row }) => (
+      <span className="font-medium text-gray-800">{row.original.name}</span>
+    ),
   },
-
   {
     accessorKey: "role",
     header: "Role",
+    cell: ({ row }) => (
+      <Badge className="bg-[#e8f5e9] text-[#2e7d32] border border-[#a5d6a7] hover:bg-[#e8f5e9] font-medium text-xs">
+        {row.original.role}
+      </Badge>
+    ),
   },
   {
     accessorKey: "email",
     header: "Email",
+    cell: ({ row }) => (
+      <span className="text-gray-600 text-sm">{row.original.email}</span>
+    ),
   },
   {
     accessorKey: "phone",
     header: "Phone",
+    cell: ({ row }) => (
+      <span className="text-gray-600 text-sm">{row.original.phone}</span>
+    ),
   },
   {
     accessorKey: "createdat",
     header: "Created at",
+    cell: ({ row }) => (
+      <span className="text-gray-500 text-xs">{row.original.created_at}</span>
+    ),
   },
   {
-    accessorKey: "updated at",
+    accessorKey: "updatedat",
     header: "Updated at",
+    cell: ({ row }) => (
+      <span className="text-gray-500 text-xs">{row.original.updated_at}</span>
+    ),
   },
-
   {
     id: "Actions",
     header: "Actions",
     cell: ({ row }) => (
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem className="text-green-600">Edit</DropdownMenuItem>
-
-          <DropdownMenuItem
-            className="text-red-600"
-            onClick={() => deleteUser(row.original.id)}
-          >
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
+        onClick={() => deleteUser(row.original.id)}
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
     ),
   },
 ];
