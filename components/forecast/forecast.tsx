@@ -168,9 +168,6 @@ export const Forecast = () => {
             <div>
               <p className="font-medium">Failed to connect to backend</p>
               <p className="text-xs mt-0.5 text-red-500">{error}</p>
-              <p className="text-xs mt-1 text-red-400">
-                Make sure uvicorn is running at localhost:8000
-              </p>
             </div>
           </div>
           <button
