@@ -40,11 +40,9 @@ export interface PrediksiResult {
   };
 }
 
-// ── Konfigurasi ───────────────────────────────────────────────
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const REFRESH_MS = 5 * 60 * 1000; // auto-refresh tiap 5 menit
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const REFRESH_MS = 5 * 60 * 1000;
 
-// ── Hook ──────────────────────────────────────────────────────
 export function usePrediksi() {
   const [data, setData] = useState<PrediksiResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +54,6 @@ export function usePrediksi() {
       setLoading(true);
       setError(null);
 
-      // Cukup GET ke 1 endpoint — backend yang fetch Supabase + prediksi
       const res = await fetch(`${API_URL}/predict/latest`);
 
       if (!res.ok) {
@@ -74,7 +71,6 @@ export function usePrediksi() {
     }
   }, []);
 
-  // Fetch pertama saat mount + auto-refresh tiap 5 menit
   useEffect(() => {
     fetchPrediksi();
     const interval = setInterval(fetchPrediksi, REFRESH_MS);

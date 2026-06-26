@@ -93,7 +93,7 @@ export function usePhChart(sensorId: number = 3) {
         .eq("sensor_id", sensorId)
         .gte("created_at", from)
         .not("value", "is", null)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (sbError) {
         console.error("Supabase error:", sbError.message);

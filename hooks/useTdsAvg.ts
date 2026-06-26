@@ -11,14 +11,19 @@ export interface ChartPoint {
 }
 
 function getDateFrom(range: RangeType): Date {
+  // Gunakan timezone lokal dengan set ke awal hari
   const now = new Date();
   const d = new Date(now);
+
   if (range === "daily") {
     d.setDate(d.getDate() - 6);
+    d.setHours(0, 0, 0, 0);
   } else if (range === "weekly") {
     d.setDate(d.getDate() - 7 * 7);
+    d.setHours(0, 0, 0, 0);
   } else {
     d.setMonth(d.getMonth() - 11);
+    d.setHours(0, 0, 0, 0);
   }
   return d;
 }
@@ -27,17 +32,22 @@ function groupByRange(
   rows: { value: number; created_at: string }[],
   range: RangeType,
 ): ChartPoint[] {
-  const map = new Map<string, number[]>();
+  const map = new Map<string, { vals: number[]; sortKey: number }>();
 
   rows.forEach(({ value, created_at }) => {
-    const date = new Date(created_at);
-    let key = "";
+    const dateStr =
+      created_at.includes("+") || created_at.endsWith("Z")
+        ? created_at
+        : created_at + "+00:00";
+    const date = new Date(dateStr);
 
+    let key = "";
     if (range === "daily") {
       key = date.toLocaleDateString("id-ID", {
         weekday: "short",
         day: "numeric",
         month: "short",
+        timeZone: "Asia/Makassar",
       });
     } else if (range === "weekly") {
       const startOfYear = new Date(date.getFullYear(), 0, 1);
@@ -52,17 +62,25 @@ function groupByRange(
       key = date.toLocaleDateString("id-ID", {
         month: "short",
         year: "2-digit",
+        timeZone: "Asia/Makassar",
       });
     }
 
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(value);
+    if (!map.has(key)) {
+      map.set(key, { vals: [], sortKey: date.getTime() });
+    }
+    map.get(key)!.vals.push(value);
   });
 
-  return Array.from(map.entries()).map(([period, vals]) => ({
-    period,
-    tds: parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)),
-  }));
+  // Sort berdasarkan waktu kemunculan pertama
+  return Array.from(map.entries())
+    .sort((a, b) => a[1].sortKey - b[1].sortKey)
+    .map(([period, { vals }]) => ({
+      period,
+      tds: parseFloat(
+        (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1),
+      ),
+    }));
 }
 
 export function getTDSStatus(avg: number | null): string {
@@ -85,9 +103,14 @@ export function useTDSChart(sensorId: number = 3) {
       setLoading(true);
       setError(null);
 
-      const from = getDateFrom(range).toISOString();
+      const fromDate = getDateFrom(range);
+      const from = fromDate.toISOString();
 
-      // ✅ Kolom yang benar: "value" bukan "tds"
+      console.log("=== DEBUG ===");
+      console.log("Range:", range);
+      console.log("From:", from);
+      console.log("Now:", new Date().toISOString());
+
       const { data, error: sbError } = await supabase
         .from("sensor_data")
         .select("value, created_at")
@@ -96,6 +119,13 @@ export function useTDSChart(sensorId: number = 3) {
         .not("value", "is", null)
         .order("created_at", { ascending: true });
 
+      console.log("Rows:", data?.length);
+      console.log("Last:", data?.[data?.length - 1]?.created_at);
+      console.log(
+        "Jun24+:",
+        data?.filter((r) => r.created_at >= "2026-06-24").length,
+      );
+
       if (sbError) {
         console.error("Supabase error:", sbError.message);
         setError("Gagal mengambil data TDS.");
@@ -103,12 +133,12 @@ export function useTDSChart(sensorId: number = 3) {
         return;
       }
 
-      // ✅ Filter nilai yang bukan angka valid
       const clean = (data ?? []).filter(
         (row) => typeof row.value === "number" && !isNaN(row.value),
       );
 
       const grouped = groupByRange(clean, range);
+      console.log("Grouped:", grouped);
       setChartData(grouped);
 
       if (grouped.length > 0) {
