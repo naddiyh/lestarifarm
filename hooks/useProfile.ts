@@ -81,7 +81,6 @@ export function useProfile() {
         .from("photo profile")
         .getPublicUrl(fileName);
 
-      // bust cache supaya avatar langsung berubah
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
       const { error: updateError } = await supabase

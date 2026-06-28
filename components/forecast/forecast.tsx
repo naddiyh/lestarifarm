@@ -16,6 +16,7 @@ import {
   CardDescription,
 } from "../ui/card";
 import { usePrediksi, LevelUrgensi } from "@/hooks/usePredict";
+import { ForecastSkeleton } from "@/components/ui/skeleton";
 
 const LEVEL_CONFIG: Record<
   LevelUrgensi,
@@ -70,12 +71,12 @@ const PPM_TARGET = 700;
 
 function TrendIcon({ deviasi, level }: { deviasi: number; level: string }) {
   if (level === "Excess")
-    return <TrendingUp className="w-6 h-6 text-red-400    shrink-0" />;
+    return <TrendingUp className="w-6 h-6 text-red-400 shrink-0" />;
   if (deviasi > 5)
     return <TrendingDown className="w-6 h-6 text-orange-400 shrink-0" />;
   if (deviasi < -5)
-    return <TrendingUp className="w-6 h-6 text-green-400  shrink-0" />;
-  return <Minus className="w-6 h-6 text-gray-400   shrink-0" />;
+    return <TrendingUp className="w-6 h-6 text-green-400 shrink-0" />;
+  return <Minus className="w-6 h-6 text-gray-400 shrink-0" />;
 }
 
 function barColor(ppm: number) {
@@ -98,12 +99,6 @@ function formatTime(date: Date | null) {
     minute: "2-digit",
     second: "2-digit",
   });
-}
-
-function getTrendText(deviasi: number) {
-  if (deviasi > 0) return `↓ ${deviasi.toFixed(1)}% below target`;
-  if (deviasi < 0) return `↑ ${Math.abs(deviasi).toFixed(1)}% above target`;
-  return "Stable at target";
 }
 
 function getAlertMessage(
@@ -130,29 +125,10 @@ function getAlertMessage(
 export const Forecast = () => {
   const { data, loading, error, updatedAt, refetch } = usePrediksi();
 
-  if (loading && !data) {
-    return (
-      <Card className="relative overflow-hidden shadow-sm">
-        <CardHeader className="pb-1">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-            AI Insight
-          </CardTitle>
-          <CardDescription>Loading predictions from sensors...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 animate-pulse">
-            <div className="h-12 bg-muted rounded-lg" />
-            <div className="h-4  bg-muted rounded w-3/4" />
-            <div className="h-6  bg-muted rounded" />
-            <div className="h-6  bg-muted rounded" />
-            <div className="h-6  bg-muted rounded" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // ── Loading state → skeleton ─────────────────────────────────
+  if (loading && !data) return <ForecastSkeleton />;
 
+  // ── Error state ───────────────────────────────────────────────
   if (error && !data) {
     return (
       <Card className="relative overflow-hidden shadow-sm">
@@ -188,12 +164,6 @@ export const Forecast = () => {
   const cfg = LEVEL_CONFIG[level] ?? LEVEL_CONFIG["Normal"];
   const deviasi = prediksi.deviasi_persen;
   const confidence = prediksi.confidence;
-  const trendColor =
-    deviasi > 10
-      ? "text-red-500"
-      : deviasi > 0
-        ? "text-orange-500"
-        : "text-green-500";
 
   const waktuLabel = forecast.waktu_kritis_mnt
     ? `${forecast.waktu_kritis_mnt} minutes`
@@ -317,7 +287,6 @@ export const Forecast = () => {
           <p className="text-sm font-medium">Recommended Action</p>
 
           {level === "Excess" ? (
-            // TDS terlalu tinggi → encerkan
             <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-200">
               <div>
                 <p className="text-sm font-medium text-red-700">
@@ -330,7 +299,6 @@ export const Forecast = () => {
               <span className="text-lg text-red-400">⚠</span>
             </div>
           ) : rekomendasi_dosis.v_pupuk_total_mL > 0 ? (
-            // Kurang nutrisi → tambah pupuk
             <>
               {[
                 {
@@ -368,7 +336,6 @@ export const Forecast = () => {
               </p>
             </>
           ) : (
-            // Normal → tidak perlu tindakan
             <div
               className="flex items-center justify-between p-3 rounded-lg"
               style={{ background: "#1A3A2A" }}

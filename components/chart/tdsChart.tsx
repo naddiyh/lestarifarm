@@ -20,7 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -29,14 +28,10 @@ import {
 } from "@/components/ui/chart";
 import { useTdsData } from "@/hooks/useTdsData";
 import { useTDSChart, RangeType } from "@/hooks/useTdsAvg";
-
-export const description = "TDS Monitoring Chart";
+import { AreaChartSkeleton, ChartSkeleton } from "@/components/ui/skeleton";
 
 const chartConfig = {
-  tds: {
-    label: "TDS (ppm)",
-    color: "#66BB6A",
-  },
+  tds: { label: "TDS (ppm)", color: "#66BB6A" },
 } satisfies ChartConfig;
 
 export function ChartTDS() {
@@ -46,31 +41,27 @@ export function ChartTDS() {
     if (tds === null)
       return { label: "Loading...", color: "text-muted-foreground" };
     if (tds > 860) return { label: "Over Nutrition", color: "text-yellow-500" };
-    if (tds >= 540 && tds <= 860)
-      return { label: "Normal TDS", color: "text-green-500" };
-    if (tds < 540) return { label: "High TDS", color: "text-blue-500" };
+    if (tds >= 540) return { label: "Normal TDS", color: "text-green-500" };
     return { label: "Low TDS", color: "text-red-500" };
   };
 
   const status = getTdsStatus(latestTds);
 
+  if (!chartData.length) return <AreaChartSkeleton />;
+
   return (
-    <Card className="">
+    <Card>
       <CardHeader>
         <CardTitle>Total Dissolved Solids Status</CardTitle>
         <CardDescription>Nutrient concentration (ppm)</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className=" w-full ">
+        <ChartContainer config={chartConfig} className="w-full">
           <AreaChart data={chartData} margin={{ right: 12 }}>
             <CartesianGrid stroke="#E0EED8" vertical={false} />
-
             <XAxis dataKey="time" tickLine={false} axisLine={false} />
-
             <YAxis tickCount={6} axisLine={false} tickLine={false} />
-
             <ChartTooltip content={<ChartTooltipContent />} />
-
             <defs>
               <linearGradient id="fillTds" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#66BB6A" stopOpacity={0.6} />
@@ -88,8 +79,7 @@ export function ChartTDS() {
           </AreaChart>
         </ChartContainer>
       </CardContent>
-
-      <CardFooter className="h-full ">
+      <CardFooter className="h-full">
         <div className="flex items-start gap-2 text-sm">
           <div className="grid gap-2">
             <div
@@ -110,18 +100,20 @@ export function ChartTDSBar() {
   const { range, setRange, chartData, avgTds, loading, error, tdsStatus } =
     useTDSChart(3);
 
+  // ── Loading → skeleton ──────────────────────────────────────
+  if (loading) return <ChartSkeleton bars={7} />;
+
   return (
     <Card>
       <CardHeader className="w-full">
         <CardTitle>Average TDS</CardTitle>
-        <CardDescription> Check average total disorder solid</CardDescription>
-
+        <CardDescription>Check average total dissolved solid</CardDescription>
         <div className="flex justify-end w-full">
           <Tabs
             value={range}
             onValueChange={(val) => setRange(val as RangeType)}
           >
-            <TabsList className="grid grid-cols-3 w-62.5 ">
+            <TabsList className="grid grid-cols-3 w-62.5">
               <TabsTrigger value="daily">Daily</TabsTrigger>
               <TabsTrigger value="weekly">Weekly</TabsTrigger>
               <TabsTrigger value="monthly">Monthly</TabsTrigger>
@@ -130,11 +122,7 @@ export function ChartTDSBar() {
         </div>
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
-            Memuat data...
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="flex items-center justify-center h-40 text-destructive text-sm">
             {error}
           </div>
@@ -143,12 +131,10 @@ export function ChartTDSBar() {
             Tidak ada data tersedia
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="l">
+          <ChartContainer config={chartConfig}>
             <BarChart data={chartData} margin={{ top: 20 }} height={250}>
               <CartesianGrid vertical={false} />
-
               <XAxis dataKey="period" tickLine={false} axisLine={false} />
-
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
               <Bar dataKey="tds" fill="#42A5F5" radius={8}>
                 <LabelList
@@ -162,7 +148,6 @@ export function ChartTDSBar() {
           </ChartContainer>
         )}
       </CardContent>
-
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium">
           Rata-rata TDS:{" "}
@@ -174,7 +159,7 @@ export function ChartTDSBar() {
         <div className="text-muted-foreground">
           Status:{" "}
           <span className="font-medium text-foreground">{tdsStatus}</span> —
-          Optimal: &lt; 300 ppm
+          Optimal: 540–860 ppm
         </div>
       </CardFooter>
     </Card>

@@ -7,11 +7,8 @@ import {
   CartesianGrid,
   LabelList,
   XAxis,
-  YAxis,
   Area,
   AreaChart,
-  Line,
-  LineChart,
 } from "recharts";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -22,41 +19,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { usePhData } from "@/hooks/usePhData";
 import { usePhChart, RangeType } from "@/hooks/usePhAvg";
-export const description = "Average pH Analysis";
-const chartDataAvg = [
-  { period: "Mon", ph: 6.1 },
-  { period: "Tue", ph: 6.3 },
-  { period: "Wed", ph: 6.0 },
-  { period: "Thu", ph: 6.2 },
-  { period: "Fri", ph: 6.4 },
-  { period: "Sab", ph: 6.4 },
-  { period: "Sun", ph: 6.4 },
-];
+import { AreaChartSkeleton, ChartSkeleton } from "@/components/ui/skeleton";
 
 const chartConfig = {
-  ph: {
-    label: "Avg pH",
-    color: "#42A5F5",
-  },
+  ph: { label: "Avg pH", color: "#42A5F5" },
 } satisfies ChartConfig;
-
-const chartConfigLine = {
-  ph: {
-    label: "pH",
-    color: "#42A5F5",
-  },
-};
+const chartConfigLine = { ph: { label: "pH", color: "#42A5F5" } };
 
 export function ChartPhLine() {
   const { chartData, latestPh } = usePhData();
@@ -64,7 +40,6 @@ export function ChartPhLine() {
   const getPhStatus = (ph: number | null) => {
     if (ph === null)
       return { label: "Loading...", color: "text-muted-foreground" };
-
     if (ph >= 6 && ph <= 7)
       return { label: "Normal Ph", color: "text-green-500" };
     if (ph < 6) return { label: "Low Ph", color: "text-red-500" };
@@ -73,6 +48,8 @@ export function ChartPhLine() {
 
   const status = getPhStatus(latestPh);
 
+  if (!chartData.length) return <AreaChartSkeleton />;
+
   return (
     <Card>
       <CardHeader>
@@ -80,16 +57,11 @@ export function ChartPhLine() {
         <CardDescription>January - June 2024</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfigLine} className=" w-full">
+        <ChartContainer config={chartConfigLine} className="w-full">
           <AreaChart data={chartData} margin={{ right: 12 }}>
             <CartesianGrid stroke="#E0EED8" vertical={false} />
-
             <XAxis dataKey="time" tickLine={false} axisLine={false} />
-
-            <YAxis tickCount={5} axisLine={false} tickLine={false} />
-
             <ChartTooltip content={<ChartTooltipContent />} />
-
             <defs>
               <linearGradient id="fillpH" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#66BB6A" stopOpacity={0.6} />
@@ -99,7 +71,7 @@ export function ChartPhLine() {
             <Area
               dataKey="ph"
               type="monotone"
-              fill="url(#fillTds)"
+              fill="url(#fillpH)"
               stroke="#66BB6A"
               strokeWidth={3}
               dot={false}
@@ -130,6 +102,9 @@ export function ChartPHBar() {
   const { range, setRange, chartData, avgPh, loading, error, phStatus } =
     usePhChart(1);
 
+  // ── Loading → skeleton ──────────────────────────────────────
+  if (loading) return <ChartSkeleton bars={7} />;
+
   return (
     <Card>
       <CardHeader>
@@ -142,7 +117,7 @@ export function ChartPHBar() {
             value={range}
             onValueChange={(val) => setRange(val as RangeType)}
           >
-            <TabsList className="grid grid-cols-3 w-62.5 ">
+            <TabsList className="grid grid-cols-3 w-62.5">
               <TabsTrigger value="daily">Daily</TabsTrigger>
               <TabsTrigger value="weekly">Weekly</TabsTrigger>
               <TabsTrigger value="monthly">Monthly</TabsTrigger>
@@ -150,35 +125,37 @@ export function ChartPHBar() {
           </Tabs>
         </div>
       </CardHeader>
-
       <CardContent>
-        <ChartContainer config={chartConfig}>
-          <BarChart data={chartData} margin={{ top: 20 }}>
-            <CartesianGrid vertical={false} />
-
-            <XAxis dataKey="period" tickLine={false} axisLine={false} />
-
-            {/* <YAxis domain={[5.5, 7]} tickLine={false} axisLine={false} /> */}
-
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-
-            <Bar dataKey="ph" fill="#42A5F5" radius={8}>
-              <LabelList
-                position="top"
-                fontSize={12}
-                className="fill-foreground"
-              />
-            </Bar>
-          </BarChart>
-        </ChartContainer>
+        {error ? (
+          <div className="flex items-center justify-center h-40 text-destructive text-sm">
+            {error}
+          </div>
+        ) : chartData.length === 0 ? (
+          <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+            Tidak ada data tersedia
+          </div>
+        ) : (
+          <ChartContainer config={chartConfig}>
+            <BarChart data={chartData} margin={{ top: 20 }}>
+              <CartesianGrid vertical={false} />
+              <XAxis dataKey="period" tickLine={false} axisLine={false} />
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <Bar dataKey="ph" fill="#42A5F5" radius={8}>
+                <LabelList
+                  position="top"
+                  fontSize={12}
+                  className="fill-foreground"
+                />
+              </Bar>
+            </BarChart>
+          </ChartContainer>
+        )}
       </CardContent>
-
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium">
           Stable pH trend <TrendingUp className="h-4 w-4 text-blue-500" />
         </div>
-
-        <div className="text-muted-foreground">Optimal range: 5.5 – 6.5</div>
+        <div className="text-muted-foreground">Optimal range: 6.0 – 7.0</div>
       </CardFooter>
     </Card>
   );

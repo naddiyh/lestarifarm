@@ -14,6 +14,7 @@ import {
   getWaterColor,
   TANK_INNER_H,
 } from "@/hooks/useWaterData";
+import { WaterTankSkeleton } from "@/components/ui/skeleton";
 
 const MAX_VOLUME = 700;
 
@@ -29,16 +30,9 @@ function Wave({ color }: { color: string }) {
           animation: "waveMove 2.5s linear infinite",
         }}
       >
-        <style>{`
-          @keyframes waveMove {
-            0%   { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-        `}</style>
+        <style>{`@keyframes waveMove { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
         <path
-          d="M0 8 C25 2 50 14 75 8 C100 2 125 14 150 8
-             C175 2 200 14 225 8 C250 2 275 14 300 8
-             C325 2 350 14 375 8 C400 2 400 16 400 16 L0 16 Z"
+          d="M0 8 C25 2 50 14 75 8 C100 2 125 14 150 8 C175 2 200 14 225 8 C250 2 275 14 300 8 C325 2 350 14 375 8 C400 2 400 16 400 16 L0 16 Z"
           fill={color}
         />
       </svg>
@@ -141,11 +135,13 @@ function TankSVG() {
 export const WaterTank = () => {
   const { volume, pct, lastUpdated, loading } = useWaterLevel();
 
+  // ── Loading → skeleton ──────────────────────────────────────
+  if (loading) return <WaterTankSkeleton />;
+
   const fillPx = Math.round(pct * TANK_INNER_H);
   const status = getStatus(volume);
   const wc = getWaterColor(pct);
 
-  // SESUDAH — pisahkan fungsi dan variabel
   const formatTime = (iso: string) => {
     const date = new Date(iso.endsWith("Z") ? iso : iso + "Z");
     return date.toLocaleTimeString("id-ID", {
@@ -157,21 +153,6 @@ export const WaterTank = () => {
   };
 
   const formattedTime = lastUpdated ? formatTime(lastUpdated) : "-";
-  if (loading) {
-    return (
-      <Card className="flex flex-col items-center">
-        <CardHeader className="w-full">
-          <CardTitle>Water Volume</CardTitle>
-          <CardDescription>Loading sensor data...</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center items-center h-64">
-          <div className="text-muted-foreground text-sm animate-pulse">
-            Loading...
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
@@ -188,10 +169,8 @@ export const WaterTank = () => {
           {status.text}
         </span>
       </CardHeader>
-
       <CardContent className="flex justify-center items-center">
         <div className="relative w-54 h-80">
-          {/* Water fill */}
           <div
             className="absolute overflow-hidden transition-all duration-700 ease-in-out"
             style={{
@@ -212,10 +191,7 @@ export const WaterTank = () => {
               <Wave color={wc.wave} />
             </div>
           </div>
-
           <TankSVG />
-
-          {/* Volume labels */}
           <div
             className="absolute flex flex-col justify-between pointer-events-none"
             style={{ right: "-35px", top: "42px", bottom: "22px" }}
@@ -228,7 +204,6 @@ export const WaterTank = () => {
           </div>
         </div>
       </CardContent>
-
       <CardFooter className="flex justify-between w-full items-center">
         <div>
           <p className="text-xs font-medium mb-0.5">Alert will be sent:</p>
@@ -240,14 +215,12 @@ export const WaterTank = () => {
             Updated: {formattedTime}
           </p>
         </div>
-
         <div className="text-center mb-2">
           <span className="text-2xl font-semibold tabular-nums">
             {volume.toLocaleString()}
           </span>
           <span className="text-sm text-muted-foreground ml-1">L</span>
         </div>
-
         <p>
           <span className="text-xl font-medium text-gray-600">
             {Math.round(pct * 100)}%
