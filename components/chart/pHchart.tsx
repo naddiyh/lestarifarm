@@ -8,6 +8,7 @@ import {
   LabelList,
   XAxis,
   Area,
+  YAxis,
   AreaChart,
 } from "recharts";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,6 +62,7 @@ export function ChartPhLine() {
           <AreaChart data={chartData} margin={{ right: 12 }}>
             <CartesianGrid stroke="#E0EED8" vertical={false} />
             <XAxis dataKey="time" tickLine={false} axisLine={false} />
+            <YAxis tickCount={6} axisLine={false} tickLine={false} />
             <ChartTooltip content={<ChartTooltipContent />} />
             <defs>
               <linearGradient id="fillpH" x1="0" y1="0" x2="0" y2="1">
@@ -102,7 +104,6 @@ export function ChartPHBar() {
   const { range, setRange, chartData, avgPh, loading, error, phStatus } =
     usePhChart(1);
 
-  // ── Loading → skeleton ──────────────────────────────────────
   if (loading) return <ChartSkeleton bars={7} />;
 
   return (
@@ -136,7 +137,7 @@ export function ChartPHBar() {
           </div>
         ) : (
           <ChartContainer config={chartConfig}>
-            <BarChart data={chartData} margin={{ top: 20 }}>
+            <BarChart data={chartData} margin={{ top: 20 }} height={250}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="period" tickLine={false} axisLine={false} />
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />

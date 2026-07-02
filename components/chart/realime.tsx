@@ -53,7 +53,7 @@ export function ChartSensors() {
       </CardHeader>
 
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+        <ChartContainer config={chartConfig} className="h-62.5 w-full">
           <LineChart data={chartData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid stroke="#E0EED8" vertical={false} />
 

@@ -88,7 +88,7 @@ export function ChartTDS() {
               {status.label}
               <TrendingUp className="h-4 w-4" />
             </div>
-            <div className="text-muted-foreground">Rentang ideal: 540-860</div>
+            <div className="text-muted-foreground">Rentang ideal : 540-860</div>
           </div>
         </div>
       </CardFooter>
@@ -159,7 +159,7 @@ export function ChartTDSBar() {
         <div className="text-muted-foreground">
           Status:{" "}
           <span className="font-medium text-foreground">{tdsStatus}</span> —
-          Optimal: 540–860 ppm
+          Optimal: 540 – 860 ppm
         </div>
       </CardFooter>
     </Card>
